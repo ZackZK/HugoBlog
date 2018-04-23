@@ -1,4 +1,4 @@
-baseURL = "http://localhost:1313"
+baseURL = "http://www.kotlinor.com/"
 languageCode = "en"
 title = "我的Blog"
 theme = "hugo-nuo"
