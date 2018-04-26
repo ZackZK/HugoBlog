@@ -12,19 +12,19 @@ gevent的安装过程：
 
 ## 1. 安装greenlet依赖 ##
 
-    {{< highlight bash >}}
-    sudo pip install greenlet
-    {{< / highlight >}}
-       
+```Shell
+  sudo pip install greenlet
+```
+
 ## 2. 安装gevent ##
 
-   {{< highlight bash >}}
+```shell
    sudo pip install gevent
-   {{< / highlight >}}
-   
+```
+
 安装过程中，碰到下面错误：
 
-{{< highlight bash >}}
+```shell
 gevent/gevent.core.c:9:22: fatal error: pyconfig.h: No such file or directory
 
  #include "pyconfig.h"
@@ -41,10 +41,10 @@ Command /usr/bin/python -c "import setuptools, tokenize;__file__='/tmp/pip_build
 
 Storing debug log for failure in /root/.pip/pip.log
 
-{{< / highlight >}}
+```
 
 这是因为缺少python-dev,安装上即可。
 
-{{< highlight bash >}}
+```shell
 apt-get install python-dev
-{{< / highlight >}}
+```

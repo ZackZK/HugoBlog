@@ -10,7 +10,7 @@ title: python 相对路径文件的操作
 
 python项目中，如果pyton代码需要访问某个外部文件，该文件位于代码文件的某个相对路径位置，我们可以在代码中使用相对路径来访问该文件。
 比如图中的代码结构：
-![files]({{ site.url }}/images/python_relative_file_path/files_structure.PNG)
+![files](/images/python_relative_file_path/files_structure.PNG)
 
 sample.py文件中，如果要访问配置文件server.ini文件，就可以用 "../conf/server.ini"来进行访问。
 
@@ -19,7 +19,7 @@ sample.py文件中，如果要访问配置文件server.ini文件，就可以用 
 
 比如，我们的例子中， sample.py文件内容如下:
 
-{{< highlight python >}}
+```python
 import ConfigParser
 import os
 
@@ -32,16 +32,15 @@ def read_conf():
 
 if __name__ == '__main__':
     print read_conf()
-{{< / highlight >}}
-
+```
 
 main.py内容如下:
 
-{{< highlight python >}}
+```python
 from utils.sample import read_conf
 
 print read_conf()
-{{< / highlight >}}
+```
 
 比如上图中，如果main.py调用read_conf时就会发现server.ini文件找不到。问题就处在运行main.py时，当前路径是main.py所在的文件夹，而sample.py中使用的相对
 路径基于该文件夹就会找错位置。解决办法是在sample.py中使用文件绝对路径来访问server.ini文件， 但是我们又要根据脚本存放的当前位置来获得运行时的路径。这个时候
@@ -50,17 +49,17 @@ print read_conf()
 
 在sample.py中file_path变量做如下修改：
 
-{{< highlight python >}}
+```python
     file_path = '../conf/server.ini'
     -->
     file_path = os.path.join(os.path.dirname(__file__) + '/../conf/server.ini')
-{{< / highlight >}}
+```
 
 *注意* 路径前加 '/',否则文件路径会不完整。
 
 参考资料：
 
-<http://stackoverflow.com/questions/918154/relative-paths-in-python>
+<http://stackoverflow.com/questions/918154/relative-paths-in-python>  
 <http://stackoverflow.com/questions/1270951/python-how-to-refer-to-relative-paths-of-resources-when-working-with-code-repo>
 
-    
+​    

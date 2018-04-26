@@ -15,7 +15,7 @@ title: spark读取hbase内容及在集群环境下的配置
 
 首先，加入下面依赖：
 
-{{< highlight xml >}}
+```xml
     <dependencies>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -29,7 +29,7 @@ title: spark读取hbase内容及在集群环境下的配置
             <artifactId>hbase-common</artifactId>
             <version>1.1.2</version>
         </dependency>
-
+    
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>
@@ -41,11 +41,11 @@ title: spark读取hbase内容及在集群环境下的配置
             <version>1.1.2</version>
         </dependency>
     </dependencies>
-{{< / highlight >}}
+```
 
 下面的例子从hbase数据库中读取数据，并进行RDD操作，生成两两组合。
 
-{{< highlight java >}}
+```java
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.util.Base64;
@@ -92,12 +92,12 @@ public class spark_hbase_main {
         JavaSparkContext jsc = new JavaSparkContext(sparkConf);
 
         Configuration conf = HBaseConfiguration.create();
-
+        
         Scan scan = new Scan();
         scan.addFamily(Bytes.toBytes("course"));
         scan.addColumn(Bytes.toBytes("course"), Bytes.toBytes("art"));
         scan.addColumn(Bytes.toBytes("course"), Bytes.toBytes("math"));
-
+        
         String scanToString = "";
         try {
             ClientProtos.Scan proto = ProtobufUtil.toScan(scan);
@@ -105,89 +105,88 @@ public class spark_hbase_main {
         } catch (IOException io) {
             System.out.println(io);
         }
-
+        
         for (int i = 0; i < 2; i++) {
             try {
                 String tableName = "scores";
                 conf.set(TableInputFormat.INPUT_TABLE, tableName);
                 conf.set(TableInputFormat.SCAN, scanToString);
-
+        
                 //获得hbase查询结果Result
                 JavaPairRDD<ImmutableBytesWritable, Result> hBaseRDD = jsc.newAPIHadoopRDD(conf,
                         TableInputFormat.class, ImmutableBytesWritable.class,
                         Result.class);
-
+        
                 /* 生成类似 [(Jim, 80, 89), (Tom, 88, 97)] 的RDD */
                 JavaPairRDD<String, List<Integer>> art_scores = hBaseRDD.mapToPair(
                         new PairFunction<Tuple2<ImmutableBytesWritable, Result>, String, List<Integer>>() {
                             @Override
                             public Tuple2<String, List<Integer>> call(Tuple2<ImmutableBytesWritable, Result> results) {
-
+        
                                 List<Integer> list = new ArrayList<Integer>();
-
+        
                                 byte[] art_score = results._2().getValue(Bytes.toBytes("course"), Bytes.toBytes("art"));
                                 byte[] math_score = results._2().getValue(Bytes.toBytes("course"), Bytes.toBytes("math"));
-
+        
                                 /* 注意： Hbase里存的数据以Byte Array形式存储， 需要使用Integer.parseInt(Bytes.toString(art_score))将数据内容转化为整型
                                 * Integer.parseInt(price.toString()) 会得到错误答案 */
                                 list.add(Integer.parseInt(Bytes.toString(art_score)));
                                 list.add(Integer.parseInt(Bytes.toString(math_score)));
-
+        
                                 return new Tuple2<String, List<Integer>>(Bytes.toString(results._1().get()), list);
                             }
                         }
                 );
-
+        
                 /* 如果是使用Java8， 可以简化成下面的形式: 
                 JavaPairRDD<Integer, Double> stock_price_pair = hBaseRDD.mapToPair(
                     (results) -> {
                           List<Integer> list = new ArrayList<Integer>();
-
+        
                           byte[] art_score = results._2().getValue(Bytes.toBytes("course"), Bytes.toBytes("art"));
                           byte[] math_score = results._2().getValue(Bytes.toBytes("course"), Bytes.toBytes("math"));
-
+        
                           list.add(Integer.parseInt(Bytes.toString(art_score)));
                           list.add(Integer.parseInt(Bytes.toString(math_score)));
-
+        
                           return new Tuple2<String, List<Integer>>(Bytes.toString(results._1().get()), list);
                     }
                 )
                 */
-
+        
                 /* 笛卡尔乘积，生成 [((Jim, 80, 89), (Tom, 88, 97)), ((Tom, 88, 97), (Jim, 80, 89)), ((Jim, 80, 89), (Jim, 80, 89)),
                 ((Tom, 88, 97), (Tom, 88, 97))] 的RDD */] */
                 JavaPairRDD<Tuple2<String, List<Integer>>, Tuple2<String, List<Integer>>> cart = art_scores.cartesian(art_scores);
-
+        
                 /* 利用row key的大小关系去除重复的组合关系， 生成 [((Jim, 80, 89), (Tom, 88, 97))] */
                 JavaPairRDD<Tuple2<String, List<Integer>>, Tuple2<String, List<Integer>>> cart2 = cart.filter(
                         new Function<Tuple2<Tuple2<String, List<Integer>>, Tuple2<String, List<Integer>>>, Boolean>() {
                             public Boolean call(Tuple2<Tuple2<String, List<Integer>>, Tuple2<String, List<Integer>>> tuple2Tuple2Tuple2) throws Exception {
-
+        
                                 return tuple2Tuple2Tuple2._1()._1().compareTo(tuple2Tuple2Tuple2._2()._1()) < 0;
                             }
                         }
                 );
-
+        
                 /* 得到最终结果 [((Jim, 80, 89), (Tom, 88, 97))] */
                 cart_all = cart2.collect();
-
+        
             } catch (Exception e) {
                 System.out.println(e);
             }
         }
     }
 }
-{{< / highlight >}}
-
+```
 编译运行时，Hbase的一些库可能会找不到，一种办法是在命令行中加入Hbase相应的jar包，比如：
 
-{{< highlight bash >}}
-spark-submit --master spark://127.0.0.0:7078 --class spark_hbase_main --jars ${HBASE_HOME}/lib/hbase-common-1.0.1.1.jar,${HBASE_HOME}/lib/hbase-client-1.0.1.1.jar,${HBASE_HOME}/lib/guava-12.0.1.jar,${HBASE_HOME}/lib/hbase-protocol-1.0.1.1.jar,${HBASE_HOME}/lib/hbase-server-1.0.1.1.jar,${HBASE_HOME}/lib/htrace-core-3.1.0-incubating.jar spark-hbase-1.0.jar
-{{< / highlight >}}
+```shell
+spark-submit --master spark://127.0.0.0:7078 --class spark_hbase_main --jars ${HBASE_HOME}/lib/hbase-common-1.0.1.1.jar,​${HBASE_HOME}/lib/hbase-client-1.0.1.1.jar,${HBASE_HOME}/lib/guava-12.0.1.jar,​${HBASE_HOME}/lib/hbase-protocol-1.0.1.1.jar,${HBASE_HOME}/lib/hbase-server-1.0.1.1.jar,​${HBASE_HOME}/lib/htrace-core-3.1.0-incubating.jar spark-hbase-1.0.jar
+```
 
 如果缺少相应的Hbase的jar包，比如缺少hbase-common-1.0.1.1.jar会出现下面的错误：
 
-{{< highlight bash >}}
+```shell
 Exception in thread "main" java.lang.NoClassDefFoundError: org/apache/hadoop/hbase/protobuf/generated/ClientProtos$Scan
         at java.lang.Class.forName0(Native Method)
         at java.lang.Class.forName(Class.java:278)
@@ -204,11 +203,11 @@ Caused by: java.lang.ClassNotFoundException: org.apache.hadoop.hbase.protobuf.ge
         at java.lang.ClassLoader.loadClass(ClassLoader.java:425)
         at java.lang.ClassLoader.loadClass(ClassLoader.java:358)
         ... 7 more
-{{< / highlight >}}
+```
 
 缺少hbase-protocol-1.0.1.1.jar会报如下错误：
 
-{{< highlight bash >}}
+```shell
 Exception in thread "main" java.lang.NoClassDefFoundError: org/apache/hadoop/hbase/protobuf/generated/ClientProtos$Scan
         at java.lang.Class.forName0(Native Method)
         at java.lang.Class.forName(Class.java:278)
@@ -226,10 +225,10 @@ Caused by: java.lang.ClassNotFoundException: org.apache.hadoop.hbase.protobuf.ge
         at java.lang.ClassLoader.loadClass(ClassLoader.java:425)
         at java.lang.ClassLoader.loadClass(ClassLoader.java:358)
         ... 7 more
-{{< / highlight >}}
+```
 
 缺少hbase-server-1.0.1.1.jar会报如下错误：
-{{< highlight bash >}}
+```shell
 Exception in thread "main" java.lang.NoClassDefFoundError: org/apache/hadoop/hbase/mapreduce/TableInputFormat
         at spark_hbase_main.main(spark_hbase_main.java:129)
         at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
@@ -249,11 +248,10 @@ Caused by: java.lang.ClassNotFoundException: org.apache.hadoop.hbase.mapreduce.T
         at java.lang.ClassLoader.loadClass(ClassLoader.java:425)
         at java.lang.ClassLoader.loadClass(ClassLoader.java:358)
         ... 10 more
-{{< / highlight >}}
-
+```
 
 缺少htrace-core-3.1.0-incubating.jar会报如下错误：
-{{< highlight bash >}}
+```shell
 15/09/12 16:56:59 ERROR TableInputFormat: java.io.IOException: java.lang.reflect.InvocationTargetException
         at org.apache.hadoop.hbase.client.ConnectionFactory.createConnection(ConnectionFactory.java:240)
         at org.apache.hadoop.hbase.client.ConnectionFactory.createConnection(ConnectionFactory.java:218)
@@ -312,23 +310,23 @@ Caused by: java.lang.ClassNotFoundException: org.apache.htrace.Trace
         at java.lang.ClassLoader.loadClass(ClassLoader.java:425)
         at java.lang.ClassLoader.loadClass(ClassLoader.java:358)
         ... 44 more
-{{< / highlight >}}
+```
 
 ## spark集群环境下面读取hbase ##
 如果要在集群上运行，会发现worker node访问不了hbase内容。原因我们之前的例子里没有指定hbase的地址信息。
 加入下面代码：
 
-{{< highlight java >}}
+```java
   conf.set("hbase.zookeeper.quorum", "18.18.18.18"); //指定ip地址
   conf.set("hbase.zookeeper.property.clientPort", "2182"); // zookeeper的端口号
-{{< / highlight >}}
+```
 
 注意，在调试过程中，还是发现如果spark的其他worker运行在其他node上，hbase还是无法正常访问。打开spark的debug级别的log，
 在spark目录conf/log4j.properties，修改：
 
-{{< highlight java >}}
+```java
 log4j.rootCategory=DEBUG, console
-{{< / highlight >}}
+```
 
 发现其他主机通过主机名来访问hbase服务器，但是由于DNS或者/etc/hosts中并没有该主机信息，导致连接不上。修改worker主机上/etc/hosts文件
 加入“18.18.18.18 hbase主机名”解决问题。
