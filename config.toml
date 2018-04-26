@@ -7,10 +7,10 @@ PygmentsCodeFences = true
 canonifyurls = true
 
 # Disqus Username
-disqusShortname = "disqus_shortname"
+#disqusShortname = "disqus_shortname"
 
 # Google Analytics UA number
-googleAnalytics = "UA-XXXXXXXX-X"
+#googleAnalytics = "UA-XXXXXXXX-X"
 
 # Copyright of your post
 copyright = "©除非特殊说明，欢迎转载"
@@ -67,9 +67,9 @@ copyright = "©除非特殊说明，欢迎转载"
   # bilibili = "bilibili_id_number"
 
   # Changyan Comments (China Only)
-  changyan = false
-  changyanId = "cyt3toRiB"
-  changyanConf = "prod_0908b1cb9a581501753cce1ed074dbe3"
+  #changyan = false
+  #changyanId = "cyt3toRiB"
+  #changyanConf = "prod_0908b1cb9a581501753cce1ed074dbe3"
 
   # Google Webmaster
   # https://www.google.com/webmasters/
