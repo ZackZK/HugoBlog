@@ -15,9 +15,7 @@ title: docker 使用笔记
 $ docker pull busybox
 
 Using default tag: latest
-
 Pulling repository docker.io/library/busybox
-
 Network timed out while trying to connect to https://index.docker.io/v1/repositories/library/busybox/images. You may want to check your internet connection or if you are behind a proxy.
 ```
 
@@ -33,9 +31,7 @@ $ mkdir /etc/systemd/system/docker.service.d
 
 ``` shell
 [Service]
-
 Environment="HTTP_PROXY=http://proxy.example.com:80/"
-
 Environment="HTTPS_PROXY=https://proxy.example.com:80/"
 
 ```
@@ -72,10 +68,7 @@ docker的container不会使用docker daemon的代理，需要额外配置，两�
 
 ```shell
 FROM ubuntu:14.04
-
 ENV http_proxy <HTTP_PROXY>
-
 ENV https_proxy <HTTPS_PROXY>
-
 RUN apt-get update && apt-get upgrade
 ```
