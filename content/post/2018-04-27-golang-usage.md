@@ -84,3 +84,20 @@ title: golang的坑
   > Array and slice values encode as **JSON** arrays, except that []**byte** encodes as a base64-encoded string.
 
    也就是说*[]byte* 类型作为base64的字符串进行encoding, 所以才出现上面奇怪的结果。
+
+# 2. slice操作
+
+## 2.1 Append string to byte slice
+
+You can append a string `s` to a byte slice using the `s...` notation:
+
+ ```go
+var buf []byte
+buf = append(buf, 'a', 'b')
+buf = append(buf, "cd"...)
+fmt.Println(buf) // [97 98 99 100]
+ ```
+
+# 3. 字符串操作
+
+## 

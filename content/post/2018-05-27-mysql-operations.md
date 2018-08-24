@@ -51,8 +51,15 @@ title: mysql数据库笔记
    $ sed -n n1,n2p mydump.sql > mytable.sql # (e.g. sed -n 48,112p)
    $ mysql -uroot -p DatabaseName <mytable.sql
    ```
+## dump数据库表创建sql
+```bash
+mysqldump -d --compact --compatible=mysql323 ${dbname}|egrep -v "(^SET|^/\*\!)"
+```
+
+
 
 [参考１]: https://dba.stackexchange.com/questions/14716/can-mysql-restore-a-single-table-from-a-large-mysqldump
 [参考２]: https://stackoverflow.com/questions/9696249/restoring-a-mysql-table-back-to-the-database
 [参考３]: https://stackoverflow.com/questions/13484667/downloading-mysql-dump-from-command-line
+[参考4]: https://stackoverflow.com/questions/1842076/how-do-i-use-mysqldump-to-export-only-the-create-table-commands
 
