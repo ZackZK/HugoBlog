@@ -1,5 +1,5 @@
 ---
-date: 2018-5-27T00:00:00Z
+date: 2018-05-27T00:00:00Z
 description: mysql数据库操作
 modified: 2018-05-27
 tags:

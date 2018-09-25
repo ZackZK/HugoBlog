@@ -1,5 +1,5 @@
 ---
-date: 2018-4-27T00:00:00Z
+date: 2018-04-27T00:00:00Z
 description: go语言的坑
 modified: 2018-04-27
 tags:
