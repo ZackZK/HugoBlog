@@ -1,5 +1,5 @@
 ---
-date: 2018-5-27T00:00:00Z
+date: 2018-05-27T00:00:00Z
 description: mysql数据库操作
 modified: 2018-05-27
 tags:
@@ -7,9 +7,9 @@ tags:
 title: mysql数据库笔记
 ---
 
-# １. 数据库备份和恢复
+##数据库备份和恢复
 
-## 数据备份
+### 数据备份
 
 1. 备份整个数据库  
 
@@ -29,7 +29,7 @@ title: mysql数据库笔记
    $ mysqldump -u [uname] -p[pass] db_name | gzip > db_backup.sql.gz
    ```
 
-## 数据恢复
+###数据恢复
 
 1. 恢复数据库
 
@@ -51,9 +51,33 @@ title: mysql数据库笔记
    $ sed -n n1,n2p mydump.sql > mytable.sql # (e.g. sed -n 48,112p)
    $ mysql -uroot -p DatabaseName <mytable.sql
    ```
-## dump数据库表创建sql
+###dump数据库表创建sql
 ```bash
 mysqldump -d --compact --compatible=mysql323 ${dbname}|egrep -v "(^SET|^/\*\!)"
+```
+
+## 查看数据库表大小
+
+### 从大到小列出所有数据库所有表
+
+```mysql
+SELECT 
+     table_schema as `Database`, 
+     table_name AS `Table`, 
+     round(((data_length + index_length) / 1024 / 1024), 2) `Size in MB` 
+FROM information_schema.TABLES 
+ORDER BY (data_length + index_length) DESC;
+```
+
+### 查看某个表大小
+
+```mysql
+SELECT 
+    table_name AS `Table`, 
+    round(((data_length + index_length) / 1024 / 1024), 2) `Size in MB` 
+FROM information_schema.TABLES 
+WHERE table_schema = "$DB_NAME"
+    AND table_name = "$TABLE_NAME";
 ```
 
 
